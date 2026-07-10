@@ -9,7 +9,11 @@ import { globalLimiter } from "./middleware/rateLimiterMiddleware.js";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
-
+import categoryRoutes from "./routes/categoryRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 // ============================================================
 // ⚙️ تحميل متغيرات البيئة — يجب أن يكون أول شيء
 // ============================================================
@@ -99,7 +103,11 @@ app.get("/", (req, res) => {
 // ✅ authLimiter مُطبق هنا على جميع مسارات /api/v1/user
 // يمكن تطبيقه بشكل أدق في authRoutes.js على مسارات محددة
 app.use("/api/v1/user", authRoutes);
-
+app.use("/api/v1/category", categoryRoutes);
+app.use("/api/v1/product", productRoutes);
+app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/order", orderRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
 // ============================================================
 // ❌ ERROR HANDLERS — معالجة الأخطاء
 // يجب أن يكونا آخر شيء دائماً

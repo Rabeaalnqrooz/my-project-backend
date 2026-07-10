@@ -31,7 +31,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   const commonCookieOptions = {
     httpOnly: true, // ✅ حماية من وصول JavaScript بالمتصفح
     secure: process.env.NODE_ENV === "production", // ✅ HTTPS في الإنتاج فقط
-    sameSite: "strict", // ✅ حماية من CSRF
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   };
 
   // 4️⃣ إرسال الاستجابة مع الكوكيز وتحديث البيانات
@@ -104,7 +104,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
     .cookie("accessToken", newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 15 * 60 * 1000,
     })
     .json({
@@ -618,13 +618,6 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: "ecommerce/profiles",
-          transformation: [
-            { width: 400, height: 400, crop: "fill", gravity: "face" },
-          ],
-          format: "webp",
-        },
         {
           folder: "ecommerce/profiles",
           transformation: [
