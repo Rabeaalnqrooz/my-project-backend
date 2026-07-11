@@ -43,11 +43,16 @@ app.use(globalLimiter);
 // ─── CORS — السماح بالطلبات من الـ Frontend فقط ────────────
 app.use(
   cors({
-    // ✅ نأخذ الرابط من .env — في الإنتاج يكون رابط الموقع الحقيقي
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true, // ضروري لإرسال واستقبال الـ Cookies
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // أضفنا OPTIONS لأن المتصفح يرسله كطلب تمهيدي
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+    ],
+    exposedHeaders: ["set-cookie"], // لكي يرى المتصفح الكوكيز إذا كنت تستخدمها
   }),
 );
 
