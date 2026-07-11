@@ -36,23 +36,28 @@ const app = express();
 // ─── Helmet — تأمين HTTP Headers تلقائياً ──────────────────
 // يضيف headers مهمة مثل:
 // X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 
 app.use(globalLimiter);
 
 // ─── CORS — السماح بالطلبات من الـ Frontend فقط ────────────
 app.use(
   cors({
+    // تأكد أن process.env.FRONTEND_URL في ريندر مطابقت لـ Vercel تماماً بدون / في النهاية
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true, // ضروري لإرسال واستقبال الـ Cookies
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // أضفنا OPTIONS لأن المتصفح يرسله كطلب تمهيدي
+    credentials: true, // ضروري جداً لأنك تستخدم withCredentials في الـ Frontend
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
       "Authorization",
       "X-Requested-With",
       "Accept",
     ],
-    exposedHeaders: ["set-cookie"], // لكي يرى المتصفح الكوكيز إذا كنت تستخدمها
+    exposedHeaders: ["set-cookie"],
   }),
 );
 

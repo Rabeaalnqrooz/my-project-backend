@@ -29,9 +29,9 @@ const sendTokenResponse = (user, statusCode, res) => {
 
   // 3️⃣ إعدادات الـ Cookies الآمنة
   const commonCookieOptions = {
-    httpOnly: true, // ✅ حماية من وصول JavaScript بالمتصفح
-    secure: process.env.NODE_ENV === "production", // ✅ HTTPS في الإنتاج فقط
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    httpOnly: true, // حماية من وصول JavaScript بالمتصفح
+    secure: true, // إجبار HTTPS وهو مدعوم تلقائياً على Render و Vercel
+    sameSite: "none", // مصيري جداً للسماح بتبادل الكوكيز عبر النطاقات المختلفة أونلاين
   };
 
   // 4️⃣ إرسال الاستجابة مع الكوكيز وتحديث البيانات
@@ -103,8 +103,8 @@ export const refreshToken = asyncHandler(async (req, res) => {
     .status(200)
     .cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true, // إجبار True أونلاين
+      sameSite: "none", // إجبار None أونلاين
       maxAge: 15 * 60 * 1000,
     })
     .json({
