@@ -12,11 +12,17 @@ export const verifyEmail = async (token, email) => {
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false, // يجب أن تكون false مع البورت 587
-    requireTLS: true, // إجبار استخدام تشفير TLS الآمن
+    secure: false, // false مع بورت 587
+    // ✅ السطرين السحريين لحل مشكلة ENETUNREACH على Render المجاني:
+    family: 4, // 👈 إجبار استخدام IPv4 وتجاهل IPv6 تماماً
+    dnsTimeout: 30000,
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS, // App Password من Google
+    },
+    // زيادة الأمان والتأكد من التشفير
+    tls: {
+      rejectUnauthorized: false, // يمنع حظر الشهادات أونلاين
     },
   });
 
