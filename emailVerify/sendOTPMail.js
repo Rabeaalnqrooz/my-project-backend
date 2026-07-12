@@ -1,24 +1,23 @@
 // backend/emailVerify/sendOTPMail.js
 
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+// تفعيل الخدمة باستخدام المفتاح المخزن في متغيرات البيئة بـ Render
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ============================================================
 // 📧 SEND OTP MAIL — إرسال كود OTP لإعادة تعيين كلمة المرور
 // ============================================================
 
 export const sendOTPMail = async (otp, email) => {
-  // ─── 1️⃣ إنشاء الـ Transporter ──────────────────────────────
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS, // App Password من Google
-    },
-  });
+  // ⚠️ ملاحظة هامة لبيئة التطوير:
+  // في الخطة المجانية لـ Resend (إذا لم تقم بربط دومين خاص بك بعد)،
+  // يجب أن يكون المرسل (from) دائماً هو الإيميل المتاح تلقائياً: 'onboarding@resend.dev'
+  // ويمكنك الإرسال فقط إلى الإيميل الشخصي الذي سجلت به حسابك في Resend للتجربة.
+  const fromEmail = "onboarding@resend.dev";
 
-  // ─── 2️⃣ قالب الإيميل ────────────────────────────────────
-  const mailOptions = {
-    from: `"${process.env.MAIL_FROM_NAME || "فريق الدعم"}" <${process.env.MAIL_USER}>`,
+  await resend.emails.send({
+    from: fromEmail,
     to: email,
     subject: "كود إعادة تعيين كلمة المرور (OTP)",
 
@@ -31,7 +30,7 @@ export const sendOTPMail = async (otp, email) => {
       إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا الإيميل.
     `,
 
-    // ✅ HTML احترافي مع إبراز الـ OTP بشكل واضح
+    // ✅ قالب الـ HTML الاحترافي الخاص بك كما هو
     html: `
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
@@ -118,9 +117,5 @@ export const sendOTPMail = async (otp, email) => {
       </body>
       </html>
     `,
-  };
-
-  // ─── 3️⃣ إرسال الإيميل ───────────────────────────────────
-  // ✅ await — نضمن انتهاء الإرسال وإذا فشل errorHandler يمسك الخطأ
-  await transporter.sendMail(mailOptions);
+  });
 };
