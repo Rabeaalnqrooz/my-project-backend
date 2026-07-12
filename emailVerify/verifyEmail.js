@@ -11,18 +11,15 @@ export const verifyEmail = async (token, email) => {
   // ✅ قمنا بتحديد السيرفر والبورت يدوياً لتفادي حظر الشبكة أونلاين (ENETUNREACH :465)
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // false مع بورت 587
-    // ✅ السطرين السحريين لحل مشكلة ENETUNREACH على Render المجاني:
-    family: 4, // 👈 إجبار استخدام IPv4 وتجاهل IPv6 تماماً
-    dnsTimeout: 30000,
+    port: 25, // 👈 جربنا المنفذ 25 لأنه أحياناً يكون مفتوحاً لتمرير البيانات أونلاين
+    secure: false,
+    family: 4,
     auth: {
       user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS, // App Password من Google
+      pass: process.env.MAIL_PASS,
     },
-    // زيادة الأمان والتأكد من التشفير
     tls: {
-      rejectUnauthorized: false, // يمنع حظر الشهادات أونلاين
+      rejectUnauthorized: false,
     },
   });
 
