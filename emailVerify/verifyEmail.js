@@ -10,28 +10,34 @@ export const verifyEmail = async (token, email) => {
   // ─── 1️⃣ إنشاء الـ Transporter ──────────────────────────────
   // ✅ نضعه داخل الدالة لضمان إعادة إنشائه في كل استدعاء
   // هذا يمنع مشاكل انتهاء الجلسة مع Gmail
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS, // App Password من Google — ليس كلمة المرور العادية
-    },
-  });
+  export const verifyEmail = async (token, email) => {
+    // ─── 1️⃣ إنشاء الـ Transporter المطور للإنتاج ──────────────────────────────
+    // ✅ قمنا بتحديد السيرفر والبورت يدوياً لتفادي حظر الشبكة أونلاين (ENETUNREACH :465)
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // يجب أن تكون false مع البورت 587
+      requireTLS: true, // إجبار استخدام تشفير TLS الآمن
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS, // App Password من Google
+      },
+    });
 
-  // ─── 2️⃣ رابط التحقق ─────────────────────────────────────
-  // ✅ نأخذ الرابط من .env بدلاً من كتابته بشكل ثابت في الكود
-  // في التطوير: http://localhost:5173
-  // في الإنتاج: https://yourapp.com
-  const verifyUrl = `${process.env.FRONTEND_URL}/verify/${token}`;
+    // ─── 2️⃣ رابط التحقق ─────────────────────────────────────
+    // ✅ نأخذ الرابط من .env بدلاً من كتابته بشكل ثابت في الكود
+    // في التطوير: http://localhost:5173
+    // في الإنتاج: https://yourapp.com
+    const verifyUrl = `${process.env.FRONTEND_URL}/verify/${token}`;
 
-  // ─── 3️⃣ قالب الإيميل ────────────────────────────────────
-  const mailOptions = {
-    from: `"${process.env.MAIL_FROM_NAME || "فريق الدعم"}" <${process.env.MAIL_USER}>`,
-    to: email,
-    subject: "تفعيل حسابك — يرجى التحقق من بريدك الإلكتروني",
+    // ─── 3️⃣ قالب الإيميل ────────────────────────────────────
+    const mailOptions = {
+      from: `"${process.env.MAIL_FROM_NAME || "فريق الدعم"}" <${process.env.MAIL_USER}>`,
+      to: email,
+      subject: "تفعيل حسابك — يرجى التحقق من بريدك الإلكتروني",
 
-    // ✅ نص عادي كـ fallback لبعض عملاء الإيميل القديمة
-    text: `
+      // ✅ نص عادي كـ fallback لبعض عملاء الإيميل القديمة
+      text: `
       مرحباً،
       شكراً لتسجيلك معنا.
       يرجى تفعيل حسابك بالنقر على الرابط التالي:
@@ -40,8 +46,8 @@ export const verifyEmail = async (token, email) => {
       إذا لم تقم بإنشاء حساب، يمكنك تجاهل هذا الإيميل.
     `,
 
-    // ✅ HTML احترافي — أفضل تجربة للمستخدم
-    html: `
+      // ✅ HTML احترافي — أفضل تجربة للمستخدم
+      html: `
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
       <head>
@@ -121,10 +127,11 @@ export const verifyEmail = async (token, email) => {
       </body>
       </html>
     `,
-  };
+    };
 
-  // ─── 4️⃣ إرسال الإيميل ───────────────────────────────────
-  // ✅ await — نضمن انتهاء الإرسال قبل المتابعة
-  // إذا فشل الإرسال سيرمي خطأ يُعالج في errorHandler تلقائياً
-  await transporter.sendMail(mailOptions);
+    // ─── 4️⃣ إرسال الإيميل ───────────────────────────────────
+    // ✅ await — نضمن انتهاء الإرسال قبل المتابعة
+    // إذا فشل الإرسال سيرمي خطأ يُعالج في errorHandler تلقائياً
+    await transporter.sendMail(mailOptions);
+  };
 };
