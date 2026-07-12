@@ -137,8 +137,12 @@ export const register = asyncHandler(async (req, res) => {
   const rawToken = user.generateEmailVerifyToken();
   await user.save({ validateBeforeSave: false });
 
-  await verifyEmail(rawToken, user.email);
+  // ✅ التعديل العبقري: أزلنا await وجعلنا الإرسال يتم في الخلفية مع الإمساك بالخطأ لو حدث دون تعطيل المستخدم
+  verifyEmail(rawToken, user.email).catch((err) => {
+    console.error("❌ فشل إرسال بريد التحقق خلف الكواليس:", err.message);
+  });
 
+  // 🎉 الآن السيرفر سيرد فوراً على الـ Frontend خلال أجزاء من الثانية!
   res.status(201).json({
     success: true,
     message: "تم إنشاء الحساب بنجاح، تحقق من بريدك الإلكتروني لتفعيل الحساب",
