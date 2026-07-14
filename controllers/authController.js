@@ -118,6 +118,9 @@ export const refreshToken = asyncHandler(async (req, res) => {
 // POST /api/v1/user/register
 // ============================================================
 
+// ============================================================
+// 📝 REGISTER — تسجيل مستخدم جديد
+// ============================================================
 export const register = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
@@ -132,20 +135,32 @@ export const register = asyncHandler(async (req, res) => {
     throw new Error("هذا البريد الإلكتروني مسجل بالفعل");
   }
 
-  const user = await User.create({ firstName, lastName, email, password });
+  // 👈 تعديل مؤقت: جعل الحساب مفعل تلقائياً لتسهيل فحص لوحة التحكم والـ login
+  const user = await User.create({
+    firstName,
+    lastName,
+    email,
+    password,
+    isVerified: true, // 🚀 مفعل تلقائياً!
+  });
 
   const rawToken = user.generateEmailVerifyToken();
   await user.save({ validateBeforeSave: false });
 
-  // ✅ التعديل العبقري: أزلنا await وجعلنا الإرسال يتم في الخلفية مع الإمساك بالخطأ لو حدث دون تعطيل المستخدم
-  verifyEmail(rawToken, user.email).catch((err) => {
-    console.error("❌ فشل إرسال بريد التحقق خلف الكواليس:", err.message);
-  });
+  // 👈 تعديل مؤقت: طباعة الرابط في الكونسول وتعليق الإرسال الفعلي عبر Resend
+  const verifyUrl = `${process.env.FRONTEND_URL}/verify/${rawToken}`;
+  console.log("-----------------------------------------");
+  console.log(`🔗 [DEVELOPMENT ONLY] رابط التحقق لـ ${user.email}:`);
+  console.log(verifyUrl);
+  console.log("-----------------------------------------");
 
-  // 🎉 الآن السيرفر سيرد فوراً على الـ Frontend خلال أجزاء من الثانية!
+  /* verifyEmail(rawToken, user.email).catch((err) => {
+    console.error("❌ فشل إرسال بريد التحقق خلف الكواليس:", err.message);
+  }); */
+
   res.status(201).json({
     success: true,
-    message: "تم إنشاء الحساب بنجاح، تحقق من بريدك الإلكتروني لتفعيل الحساب",
+    message: "تم إنشاء الحساب وتفعيله تلقائياً (بيئة التطوير)",
   });
 });
 
@@ -184,6 +199,9 @@ export const verifyUserEmail = asyncHandler(async (req, res) => {
 // POST /api/v1/user/resend-verification
 // ============================================================
 
+// ============================================================
+// 🔄 RESEND VERIFICATION — إعادة إرسال إيميل التحقق
+// ============================================================
 export const resendVerification = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -215,11 +233,19 @@ export const resendVerification = asyncHandler(async (req, res) => {
 
   const rawToken = user.generateEmailVerifyToken();
   await user.save({ validateBeforeSave: false });
-  await verifyEmail(rawToken, user.email);
+
+  // 👈 تعديل مؤقت: طباعة الرابط في الكونسول وتعليق الإرسال الفعلي
+  const verifyUrl = `${process.env.FRONTEND_URL}/verify/${rawToken}`;
+  console.log("-----------------------------------------");
+  console.log(`🔄 [DEVELOPMENT ONLY] إعادة إرسال الرابط لـ ${user.email}:`);
+  console.log(verifyUrl);
+  console.log("-----------------------------------------");
+
+  // await verifyEmail(rawToken, user.email);
 
   res.status(200).json({
     success: true,
-    message: "تم إعادة إرسال إيميل التحقق",
+    message: "تم توليد رابط تفعيل جديد وطباعته في كونسول السيرفر",
   });
 });
 
@@ -303,6 +329,9 @@ export const getMe = asyncHandler(async (req, res) => {
 // POST /api/v1/user/forgot-password
 // ============================================================
 
+// ============================================================
+// 🔓 FORGOT PASSWORD — طلب إعادة تعيين كلمة المرور
+// ============================================================
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -328,14 +357,20 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const rawOTP = user.generateOTP();
   await user.save({ validateBeforeSave: false });
 
-  await sendOTPMail(rawOTP, user.email);
+  // 👈 تعديل مؤقت: طباعة الـ OTP في الكونسول لتنسخه وتضعه في الـ Frontend مباشرة
+  console.log("-----------------------------------------");
+  console.log(
+    `🔑 [DEVELOPMENT ONLY] كود الـ OTP لـ ${user.email} هو: ${rawOTP}`,
+  );
+  console.log("-----------------------------------------");
+
+  // await sendOTPMail(rawOTP, user.email);
 
   res.status(200).json({
     success: true,
-    message: "إذا كان البريد مسجلاً، ستصلك رسالة OTP",
+    message: "إذا كان البريد مسجلاً، ستصلك رسالة OTP (تمت طباعته في الكونسول)",
   });
 });
-
 // ============================================================
 // 🔢 VERIFY RESET OTP — التحقق من OTP
 // POST /api/v1/user/verify-reset-otp
@@ -384,6 +419,9 @@ export const verifyResetOTP = asyncHandler(async (req, res) => {
 // POST /api/v1/user/resend-reset-otp
 // ============================================================
 
+// ============================================================
+// 🔄 RESEND RESET OTP — إعادة إرسال OTP
+// ============================================================
 export const resendResetOTP = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -408,11 +446,20 @@ export const resendResetOTP = asyncHandler(async (req, res) => {
 
   const rawOTP = user.generateOTP();
   await user.save({ validateBeforeSave: false });
-  await sendOTPMail(rawOTP, user.email);
+
+  // 👈 تعديل مؤقت: طباعة كود الـ OTP الجديد في الكونسول
+  console.log("-----------------------------------------");
+  console.log(
+    `🔄 [DEVELOPMENT ONLY] كود الـ OTP الجديد لـ ${user.email} هو: ${rawOTP}`,
+  );
+  console.log("-----------------------------------------");
+
+  // await sendOTPMail(rawOTP, user.email);
 
   res.status(200).json({
     success: true,
-    message: "إذا كان البريد مسجلاً، ستصلك رسالة OTP جديدة",
+    message:
+      "إذا كان البريد مسجلاً، ستصلك رسالة OTP جديدة (تمت طباعتها في الكونسول)",
   });
 });
 
