@@ -14,8 +14,10 @@ const uploadImageToCloudinary = (fileBuffer) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: "ecommerce/products",
-        transformation: [{ width: 800, height: 800, crop: "fill" }],
-        format: "webp",
+        transformation: [
+          { width: 800, height: 800, crop: "fill" },
+          { fetch_format: "auto", quality: "auto" },
+        ],
       },
       (error, result) => {
         if (error) reject(error);

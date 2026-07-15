@@ -31,8 +31,10 @@ export const createCategory = asyncHandler(async (req, res) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           folder: "ecommerce/categories",
-          transformation: [{ width: 600, height: 600, crop: "fill" }],
-          format: "webp",
+          transformation: [
+            { width: 600, height: 600, crop: "fill" },
+            { fetch_format: "auto", quality: "auto" },
+          ],
         },
         (error, result) => {
           if (error) reject(error);
@@ -129,8 +131,10 @@ export const updateCategory = asyncHandler(async (req, res) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           folder: "ecommerce/categories",
-          transformation: [{ width: 600, height: 600, crop: "fill" }],
-          format: "webp",
+          transformation: [
+            { width: 600, height: 600, crop: "fill" },
+            { fetch_format: "auto", quality: "auto" },
+          ],
         },
         (error, result) => {
           if (error) reject(error);
