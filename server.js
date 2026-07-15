@@ -14,6 +14,7 @@ import productRoutes from "./routes/productRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import compression from "compression";
 // ============================================================
 // ⚙️ تحميل متغيرات البيئة — يجب أن يكون أول شيء
 // ============================================================
@@ -41,7 +42,7 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
-
+app.use(compression());
 app.use(globalLimiter);
 
 // ─── CORS — السماح بالطلبات من الـ Frontend فقط ────────────
