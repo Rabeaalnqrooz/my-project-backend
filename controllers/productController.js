@@ -270,3 +270,110 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     message: "تم حذف المنتج بنجاح",
   });
 });
+// ============================================================
+// ⭐ CREATE PRODUCT REVIEW — إضافة تقييم للمنتج (مستخدم مسجل)
+// ============================================================
+
+// backend/controllers/productController.js
+
+export const createProductReview = asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body;
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    res.status(404);
+    throw new Error("المنتج غير موجود");
+  }
+
+  // ✅ منع التقييم المكرر لنفس المستخدم
+  const alreadyReviewed = product.reviews.find(
+    (r) => r.user.toString() === req.user._id.toString(),
+  );
+
+  if (alreadyReviewed) {
+    res.status(400);
+    throw new Error("لقد قمت بتقييم هذا المنتج سابقاً");
+  }
+  // ✅ بناء الاسم الكامل من firstName و lastName المخزنة في Mongoose
+  const fullName =
+    req.user.firstName && req.user.lastName
+      ? `${req.user.firstName} ${req.user.lastName}`
+      : req.user.firstName || req.user.email?.split("@")[0] || "عميل جوليا";
+  const review = {
+    user: req.user._id,
+    userName: fullName,
+    rating: Number(rating),
+    comment,
+    createdAt: new Date(),
+  };
+
+  product.reviews.push(review);
+  product.numReviews = product.reviews.length;
+  product.rating =
+    product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+    product.reviews.length;
+
+  await product.save();
+
+  res.status(201).json({
+    success: true,
+    message: "تم إضافة التقييم بنجاح",
+    reviews: product.reviews,
+    rating: product.rating,
+    numReviews: product.numReviews,
+  });
+});
+// ============================================================
+// 🗑️ DELETE PRODUCT REVIEW — حذف تقييم (أدمن فقط)
+// ============================================================
+
+export const deleteProductReview = asyncHandler(async (req, res) => {
+  const { id, reviewId } = req.params;
+
+  const product = await Product.findById(id);
+
+  if (!product) {
+    res.status(404);
+    throw new Error("المنتج غير موجود");
+  }
+
+  // 1️⃣ البحث عن التقييم المطلوب
+  const review = product.reviews.find((rev) => rev._id.toString() === reviewId);
+
+  if (!review) {
+    res.status(404);
+    throw new Error("التقييم غير موجود");
+  }
+
+  // 2️⃣ التحقق: هل المستخدم الحالي هو صاحب التقييم أم أن لديه دور admin؟
+  const isOwner = review.user.toString() === req.user._id.toString();
+  const isAdmin = req.user.role === "admin";
+
+  if (!isOwner && !isAdmin) {
+    res.status(403);
+    throw new Error("غير مصرح لك بحذف هذا التقييم");
+  }
+
+  // 3️⃣ تصفية التقييم المراد حذفه
+  product.reviews = product.reviews.filter(
+    (rev) => rev._id.toString() !== reviewId,
+  );
+
+  // 4️⃣ إعادة حساب المعدل والإجمالي
+  product.numReviews = product.reviews.length;
+  product.rating =
+    product.reviews.length > 0
+      ? product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+        product.reviews.length
+      : 0;
+
+  await product.save();
+
+  res.status(200).json({
+    success: true,
+    message: "تم حذف التقييم بنجاح",
+    reviews: product.reviews,
+    rating: product.rating,
+    numReviews: product.numReviews,
+  });
+});

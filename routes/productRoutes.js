@@ -1,5 +1,3 @@
-// backend/routes/productRoutes.js
-
 import express from "express";
 import {
   createProduct,
@@ -7,24 +5,25 @@ import {
   getProductBySlug,
   updateProduct,
   deleteProduct,
+  createProductReview, // 👈 إضافة
+  deleteProductReview, // 👈 إضافة
 } from "../controllers/productController.js";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
 import { upload } from "../config/cloudinary.js";
 
 const router = express.Router();
 
-// ============================================================
-// 🌐 المسارات العامة — لا تحتاج مصادقة
-// ============================================================
-
+// 🌐 المسارات العامة
 router.get("/", getProducts);
 router.get("/:slug", getProductBySlug);
 
-// ============================================================
-// 👑 مسارات الأدمن — تتطلب مصادقة + صلاحية أدمن
-// ============================================================
+// ⭐ إضافة تقييم (مستخدم مسجل دخول)
+router.post("/:id/reviews", protect, createProductReview);
 
-// ✅ upload.array("images", 8) → بيسمح بـ 8 صور كحد أقصى بحقل اسمه "images"
+// 👑 حذف تقييم (أدمن فقط)
+router.delete("/:id/reviews/:reviewId", protect, deleteProductReview);
+
+// 👑 مسارات الأدمن للمنتجات
 router.post("/", protect, adminOnly, upload.array("images", 8), createProduct);
 
 router
