@@ -35,7 +35,7 @@ const uploadImageToCloudinary = (fileBuffer) => {
 export const createProduct = asyncHandler(async (req, res) => {
   const { name, description, category, price, discountPrice, stock, brand } =
     req.body;
-
+  const { isBundle, bundleItems } = req.body;
   if (!name || !description || !category || !price) {
     res.status(400);
     throw new Error("الاسم والوصف والتصنيف والسعر كلها حقول مطلوبة");
@@ -74,6 +74,10 @@ export const createProduct = asyncHandler(async (req, res) => {
     stock,
     brand,
     images,
+    // ✅ جديد
+    isBundle: isBundle === "true" || isBundle === true,
+    // ✅ bundleItems جاي كـ JSON string من الفرونت اند (بسبب استخدام FormData)، لازم نفكه
+    bundleItems: bundleItems ? JSON.parse(bundleItems) : [],
     createdBy: req.user._id,
   });
 
@@ -97,7 +101,16 @@ export const getProducts = asyncHandler(async (req, res) => {
   if (category) {
     filter.category = category; // ✅ فلترة حسب تصنيف معين (نبعت الـ id)
   }
-
+  if (req.query.bundlesOnly === "true") {
+    // ✅ صفحة الباقات المستقبلية: نجيب الباقات بس
+    filter.isBundle = true;
+  } else if (req.query.all !== "true") {
+    // ✅ صفحة المتجر العامة (المنتجات العادية): نستثني الباقات تلقائياً
+    // بما إنها رح يكون إلها صفحة عرض خاصة فيها لحالها
+    filter.isBundle = { $ne: true };
+  }
+  // ✅ ملاحظة: لو all=true (لوحة الأدمن) وbundlesOnly مش true،
+  // ما منضيف أي شرط على isBundle — الأدمن لازم يشوف كل شي (منتجات + باقات) للإدارة
   if (search) {
     // ✅ بحث جزئي (Partial Match) بغض النظر عن حالة الأحرف (case-insensitive)
     // بيبحث بالاسم وكمان بالوصف، وبيطابق أي جزء من النص مش كلمة كاملة بس
@@ -148,10 +161,9 @@ export const getProducts = asyncHandler(async (req, res) => {
 // ============================================================
 
 export const getProductBySlug = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({ slug: req.params.slug }).populate(
-    "category",
-    "name slug",
-  );
+  const product = await Product.findOne({ slug: req.params.slug })
+    .populate("category", "name slug")
+    .populate("bundleItems.product", "name slug price images"); // ✅ جديد
 
   if (!product) {
     res.status(404);
@@ -200,7 +212,14 @@ export const updateProduct = asyncHandler(async (req, res) => {
   if (typeof req.body.isActive !== "undefined") {
     product.isActive = req.body.isActive;
   }
-
+  // ✅ جديد: تحديث بيانات الباقة (اختياري)
+  if (req.body.isBundle !== undefined) {
+    product.isBundle =
+      req.body.isBundle === "true" || req.body.isBundle === true;
+  }
+  if (req.body.bundleItems !== undefined) {
+    product.bundleItems = JSON.parse(req.body.bundleItems);
+  }
   // ─── حذف صور محددة (اختياري) ─────────────────────────────────
   // ✅ الفرونت بيبعت array من publicIds المراد حذفها: removeImages: ["id1", "id2"]
   if (req.body.removeImages) {

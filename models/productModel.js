@@ -64,6 +64,27 @@ const productSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    // ─── هل هذا المنتج "باقة" مكوّنة من عدة منتجات؟ ─────────
+    isBundle: {
+      type: Boolean,
+      default: false,
+    },
+
+    // ─── المنتجات المكوّنة للباقة (للعرض فقط — لا تؤثر على المخزون) ─
+    bundleItems: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+        },
+        quantity: {
+          type: Number,
+          min: 1,
+          default: 1,
+        },
+        _id: false, // ✅ ما بدنا _id منفصل لكل عنصر جوا القائمة
+      },
+    ],
 
     // ─── الوصف الكامل للمنتج ─────────────────────────────────
     description: {
